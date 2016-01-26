@@ -29,7 +29,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import javax.security.auth.Subject;
+import org.dcache.auth.GidPrincipal;
 import org.dcache.auth.Subjects;
+import org.dcache.auth.UidPrincipal;
 import org.dcache.nfs.ChimeraNFSException;
 import org.dcache.nfs.ExportFile;
 import org.dcache.nfs.FsExport;
@@ -65,17 +67,23 @@ public class PseudoFs extends ForwardingFileSystem {
     private final VirtualFileSystem _inner;
     private final ExportFile _exportFile;
     private final RpcAuth _auth;
+    private final Stat _stat;
 
     private final static int ACCESS4_MASK =
             ACCESS4_DELETE | ACCESS4_EXECUTE | ACCESS4_EXTEND
             | ACCESS4_LOOKUP | ACCESS4_MODIFY | ACCESS4_READ;
 
     public PseudoFs(VirtualFileSystem inner, RpcCall call, ExportFile exportFile) {
+        this(inner, call, exportFile, null);
+    }
+
+    public PseudoFs(VirtualFileSystem inner, RpcCall call, ExportFile exportFile, Stat stat) {
         _inner = inner;
         _subject = call.getCredential().getSubject();
         _auth = call.getCredential();
         _inetAddress = call.getTransport().getRemoteSocketAddress().getAddress();
         _exportFile = exportFile;
+        _stat = stat;
     }
 
     @Override
@@ -382,6 +390,18 @@ public class PseudoFs extends ForwardingFileSystem {
                                 acemask4.toString(unixAccessmask), new SubjectHolder(_subject));
                 }
                 throw new AccessException("permission deny");
+            }
+        }
+        if (_stat != null && Subjects.isRoot(_subject)) {
+            if (_stat.isDefined(Stat.StatAttribute.OWNER)) {
+                Set uidPrincipals = effectiveSubject.getPrincipals(UidPrincipal.class);
+                uidPrincipals.clear();
+                uidPrincipals.add(new UidPrincipal(_stat.getUid()));
+            }
+            if (_stat.isDefined(Stat.StatAttribute.GROUP)) {
+                Set gidPrincipals = effectiveSubject.getPrincipals(GidPrincipal.class);
+                gidPrincipals.clear();
+                gidPrincipals.add(new GidPrincipal(_stat.getGid(), true));
             }
         }
         return effectiveSubject;

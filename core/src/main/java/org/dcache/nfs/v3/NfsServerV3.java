@@ -277,7 +277,7 @@ public class NfsServerV3 extends nfs3_protServerStub {
     @Override
     public CREATE3res NFSPROC3_CREATE_3(RpcCall call$, CREATE3args arg1) {
 
-        VirtualFileSystem fs = new PseudoFs(_vfs, call$, _exports);
+        VirtualFileSystem fs = new PseudoFs(_vfs, call$, _exports, HimeraNfsUtils.getStat(arg1.how.obj_attributes));
         _log.debug("NFS Request CREATE3 uid: {}", call$.getCredential());
 
         CREATE3res res = new CREATE3res();
@@ -594,7 +594,7 @@ public class NfsServerV3 extends nfs3_protServerStub {
     @Override
     public MKDIR3res NFSPROC3_MKDIR_3(RpcCall call$, MKDIR3args arg1) {
 
-        VirtualFileSystem fs = new PseudoFs(_vfs, call$, _exports);
+        VirtualFileSystem fs = new PseudoFs(_vfs, call$, _exports, HimeraNfsUtils.getStat(arg1.attributes));
         _log.debug("NFS Request MKDIR3 uid: {}", call$.getCredential());
 
         MKDIR3res res = new MKDIR3res();

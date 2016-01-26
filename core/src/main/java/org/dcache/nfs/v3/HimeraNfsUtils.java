@@ -117,7 +117,10 @@ public class HimeraNfsUtils {
     }
 
     public static void set_sattr(Inode inode, VirtualFileSystem fs, sattr3 s) throws IOException {
+        fs.setattr(inode, getStat(s));
+    }
 
+    public static Stat getStat(sattr3 s) {
         Stat stat = new Stat();
         long now = System.currentTimeMillis();
 
@@ -163,8 +166,7 @@ public class HimeraNfsUtils {
                 break;
             default:
         }
-
-        fs.setattr(inode, stat);
+        return stat;
     }
 
 
